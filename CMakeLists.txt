@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.12)
 project(CMakeSFMLProject LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -16,15 +16,30 @@ FetchContent_Declare(ImGui
     GIT_TAG v1.89.9)
 FetchContent_MakeAvailable(ImGui)
 FetchContent_GetProperties(ImGui SOURCE_DIR IMGUI_DIR)
-
 set(IMGUI_SFML_FIND_SFML OFF)
+
 FetchContent_Declare(ImGui-SFML
     GIT_REPOSITORY https://github.com/SFML/imgui-sfml
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(ImGui-SFML)
 
-add_executable(CMakeSFMLProject src/main.cpp)
-target_link_libraries(CMakeSFMLProject PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML)
+include_directories(libs/sfml)
+include_directories(libs/imgui-knobs)
+include_directories(libs/imgui-toggle)
+include_directories(${imgui_SOURCE_DIR})
+
+# Find SFML components
+# find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+add_subdirectory(libs/imgui-knobs)
+add_subdirectory(libs/imgui-toggle)
+
+add_executable(CMakeSFMLProject
+    src/main.cpp
+    src/demo-code.cpp
+
+    # libs/imgui-knobs/imgui-knobs.cpp
+)
+target_link_libraries(CMakeSFMLProject PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML imgui-knobs imgui-toggle)
 target_compile_features(CMakeSFMLProject PRIVATE cxx_std_17)
 
 if(WIN32)
