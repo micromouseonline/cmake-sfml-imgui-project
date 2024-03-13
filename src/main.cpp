@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <filesystem>
+#include <iostream>
 #include "demo-code.h"
 #include "imgui-knobs.h"
 #include "implot.h"
@@ -90,15 +91,23 @@ int main() {
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport /
                                                          // Platform Windows
+
+  auto fancyFont = io.Fonts->AddFontFromFileTTF("CONSOLA.TTF", 20);
+  if (!ImGui::SFML::UpdateFontTexture()) {
+    std::cerr << "No luck\n";
+  }
+
   // ImGui::CreateContext();
-  ImPlot::CreateContext();  // don't forget this
+  ImPlot::CreateContext();  // don't forget this TODO:: Find out why this is needed
+
   window.setVerticalSyncEnabled(true);
   // window.setFramerateLimit(60);
 
   //// The font file must be in the same directory as the binary - or you must know the relative path
+  //// This font setting is entirely independant of ImGui
   sf::Font font;
   font.loadFromFile("CONSOLA.TTF");
-  sf::Text text(currentPathString, font, 20);
+  sf::Text text(currentPathString, font, 14);
   text.setFillColor(sf::Color::Cyan);
   text.setPosition(10, 10);  // Set position on the window
 
@@ -131,12 +140,15 @@ int main() {
     imgui_toggle_demo();
 
     update_balls(velocity, delta_time.asSeconds());
+
     /// Create a window that only displays a string
+    ImGui::PushFont(fancyFont);
     ImGui::Begin("currentPathString:", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text(" %s", currentPathString.c_str());
     /// tie it to one of the balls
     ImGui::SetWindowPos(balls[0].ball.getPosition() - ImVec2(0, ball_radius + ImGui::GetWindowHeight()));
     ImGui::End();
+    ImGui::PopFont();
 
     ImGui::ShowDemoWindow();
     ImPlot::ShowDemoWindow();
