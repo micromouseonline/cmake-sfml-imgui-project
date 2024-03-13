@@ -1,22 +1,23 @@
+#include <functional>
 #include <imgui-SFML.h>
 #include <math.h>
-#include <functional>
 #include <random>
 #include <string>
-#define IMGUI_DEFINE_MATH_OPERATORS  // Access to math operators
-#include <imgui.h>
+
+#define IMGUI_DEFINE_MATH_OPERATORS // Access to math operators
+#include "demo-code.h"
+#include "imgui-knobs.h"
+#include "implot.h"
 #include <SFML/Graphics.hpp>
 #include <cmath>
-#include "imgui-knobs.h"
-
-#include "demo-code.h"
+#include <imgui.h>
 
 //-----------------------------------------------------------------------------
 /// Handy debug macro
-#define IM_TRACE_LOCATION()                                        \
-  if (ImGui::Begin("Function Trace")) {                            \
-    ImGui::Text("%s(), %s::%d", __FUNCTION__, __FILE__, __LINE__); \
-  }                                                                \
+#define IM_TRACE_LOCATION()                                                    \
+  if (ImGui::Begin("Function Trace")) {                                        \
+    ImGui::Text("%s(), %s::%d", __FUNCTION__, __FILE__, __LINE__);             \
+  }                                                                            \
   ImGui::End();
 //-----------------------------------------------------------------------------
 
@@ -40,14 +41,17 @@ void init_balls() {
 
   auto random = std::bind(distribution, std::ref(engine));
   sf::Vector2f direction(random(), random());
-  float velocity = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+  float velocity =
+      std::sqrt(direction.x * direction.x + direction.y * direction.y);
   for (int i = 0; i < NUM_BALLS; i++) {
     balls[i].direction = sf::Vector2f(random(), random());
     balls[i].ball.setRadius(ball_radius);
     balls[i].ball.setFillColor(sf::Color::Yellow);
     balls[i].ball.setOrigin(ball_radius, ball_radius);
     balls[i].ball.setPosition(window_width / 2, window_height / 2);
-    balls[i].ball.setPosition(ball_radius + rand() % (window_width - 2 * ball_radius), ball_radius + rand() % (window_height - 2 * ball_radius));
+    balls[i].ball.setPosition(
+        ball_radius + rand() % (window_width - 2 * ball_radius),
+        ball_radius + rand() % (window_height - 2 * ball_radius));
     balls[i].ball.move(random(), random());
   }
 }
@@ -56,18 +60,19 @@ void update_balls(float velocity, float delta_time) {
     const auto pos = balls[i].ball.getPosition();
     float delta = delta_time * velocity;
 
-    sf::Vector2f new_pos(pos.x + balls[i].direction.x * delta, pos.y + balls[i].direction.y * delta);
+    sf::Vector2f new_pos(pos.x + balls[i].direction.x * delta,
+                         pos.y + balls[i].direction.y * delta);
 
-    if (new_pos.x - ball_radius < 0) {  // left window edge
+    if (new_pos.x - ball_radius < 0) { // left window edge
       balls[i].direction.x *= -1;
       new_pos.x = 0 + ball_radius;
-    } else if (new_pos.x + ball_radius >= window_width) {  // right window edge
+    } else if (new_pos.x + ball_radius >= window_width) { // right window edge
       balls[i].direction.x *= -1;
       new_pos.x = window_width - ball_radius;
-    } else if (new_pos.y - ball_radius < 0) {  // top of window
+    } else if (new_pos.y - ball_radius < 0) { // top of window
       balls[i].direction.y *= -1;
       new_pos.y = 0 + ball_radius;
-    } else if (new_pos.y + ball_radius >= window_height) {  // bottom of window
+    } else if (new_pos.y + ball_radius >= window_height) { // bottom of window
       balls[i].direction.y *= -1;
       new_pos.y = window_height - ball_radius;
     }
@@ -76,14 +81,19 @@ void update_balls(float velocity, float delta_time) {
 }
 
 int main() {
-  auto window = sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
+  auto window =
+      sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
   int x = ImGui::SFML::Init(window);
-  ImGuiIO& io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport / Platform Windows
-
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableGamepad;              // Enable Gamepad Controls
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport /
+                                                      // Platform Windows
+  // ImGui::CreateContext();
+  ImPlot::CreateContext(); // don't forget this
   window.setVerticalSyncEnabled(true);
   // window.setFramerateLimit(60);
 
@@ -99,7 +109,7 @@ int main() {
       }
       if (event.type == sf::Event::Resized) {
         sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
-        window.setView(sf::View(visibleArea));  // or everything distorts
+        window.setView(sf::View(visibleArea)); // or everything distorts
       }
     }
 
@@ -114,6 +124,16 @@ int main() {
     float velocity = imgui_knob_demo();
     imgui_toggle_demo();
     ImGui::ShowDemoWindow();
+    ImPlot::ShowDemoWindow();
+
+    int bar_data[11];
+    float x_data[1000];
+    float y_data[1000];
+    // if (ImPlot::BeginPlot("My Plot")) {
+    //   ImPlot::PlotBars("My Bar Plot", bar_data, 11);
+    //   ImPlot::PlotLine("My Line Plot", x_data, y_data, 1000);
+    //   ImPlot::EndPlot();
+    // }
 
     update_balls(velocity, delta_time.asSeconds());
     ////  RENDER OBJECTS  ////

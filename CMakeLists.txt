@@ -26,20 +26,30 @@ FetchContent_MakeAvailable(ImGui-SFML)
 include_directories(libs/sfml)
 include_directories(libs/imgui-knobs)
 include_directories(libs/imgui-toggle)
+include_directories(libs/implot)
 include_directories(${imgui_SOURCE_DIR})
 
 # Find SFML components
 # find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
 add_subdirectory(libs/imgui-knobs)
 add_subdirectory(libs/imgui-toggle)
+add_subdirectory(libs/implot)
 
 add_executable(CMakeSFMLProject
     src/main.cpp
     src/demo-code.cpp
 
+    libs/implot/implot_demo.cpp
+
     # libs/imgui-knobs/imgui-knobs.cpp
 )
-target_link_libraries(CMakeSFMLProject PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML imgui-knobs imgui-toggle)
+target_link_libraries(CMakeSFMLProject PRIVATE
+    sfml-graphics
+    ImGui-SFML::ImGui-SFML
+    imgui-knobs
+    imgui-toggle
+    implot
+)
 target_compile_features(CMakeSFMLProject PRIVATE cxx_std_17)
 
 if(WIN32)
