@@ -24,9 +24,7 @@ void right_justify(std::string s, int width) {
 }
 
 void imgui_toggle_demo() {
-  if (not ImGui::Begin("Toggles, radiobuttons and checkboxes")) {
-    return;
-  }
+  ImGui::Begin("Toggles, radiobuttons and checkboxes");
   /// save some colour shortcuts
   const ImVec4 green(0.16f, 0.66f, 0.45f, 1.0f);
   const ImVec4 red(0.96f, 0.0f, 0.0f, 1.0f);
@@ -122,9 +120,7 @@ void imgui_toggle_demo() {
 
 float imgui_knob_demo() {
   static float value = 30.0;
-  if (not ImGui::Begin("Imgui-Knobs Demo")) {
-    return value;
-  }
+  ImGui::Begin("Imgui-Knobs Demo");
   /// save some colour shortcuts
   const ImVec4 green(0.16f, 0.66f, 0.45f, 1.0f);
   const ImVec4 red(0.96f, 0.0f, 0.0f, 1.0f);
