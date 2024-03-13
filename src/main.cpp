@@ -54,7 +54,6 @@ void init_balls() {
   }
 }
 
-
 void update_balls(float velocity, float delta_time) {
   for (int i = 0; i < NUM_BALLS; i++) {
     const auto pos = balls[i].ball.getPosition();
@@ -80,21 +79,28 @@ void update_balls(float velocity, float delta_time) {
 }
 
 int main() {
-  auto window =
-      sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
+  std::filesystem::path currentPath = std::filesystem::current_path();
+  std::string currentPathString = currentPath.string();
+
+  auto window = sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
   int x = ImGui::SFML::Init(window);
   ImGuiIO &io = ImGui::GetIO();
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad;              // Enable Gamepad Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport /
-                                                      // Platform Windows
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport /
+                                                         // Platform Windows
   // ImGui::CreateContext();
-  ImPlot::CreateContext(); // don't forget this
+  ImPlot::CreateContext();  // don't forget this
   window.setVerticalSyncEnabled(true);
   // window.setFramerateLimit(60);
+
+  //// The font file must be in the same directory as the binary - or you must know the relative path
+  sf::Font font;
+  font.loadFromFile("CONSOLA.TTF");
+  sf::Text text(currentPathString, font, 20);
+  text.setFillColor(sf::Color::Cyan);
+  text.setPosition(10, 10);  // Set position on the window
 
   init_balls();
   sf::Clock clock;
@@ -108,7 +114,7 @@ int main() {
       }
       if (event.type == sf::Event::Resized) {
         sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
-        window.setView(sf::View(visibleArea)); // or everything distorts
+        window.setView(sf::View(visibleArea));  // or everything distorts
       }
     }
 
@@ -120,27 +126,27 @@ int main() {
 
     /// the ImGui windows do not need to be invoked inside the render section
     /// They actually get drawn by ImGui::SFML::Render()
+    /// All the operations just add to a draw list
     float velocity = imgui_knob_demo();
     imgui_toggle_demo();
-    ImGui::ShowDemoWindow();
-    ImPlot::ShowDemoWindow();
-
-    int bar_data[11];
-    float x_data[1000];
-    float y_data[1000];
-    // if (ImPlot::BeginPlot("My Plot")) {
-    //   ImPlot::PlotBars("My Bar Plot", bar_data, 11);
-    //   ImPlot::PlotLine("My Line Plot", x_data, y_data, 1000);
-    //   ImPlot::EndPlot();
-    // }
 
     update_balls(velocity, delta_time.asSeconds());
+    /// Create a window that only displays a string
+    ImGui::Begin("currentPathString:", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text(" %s", currentPathString.c_str());
+    /// tie it to one of the balls
+    ImGui::SetWindowPos(balls[0].ball.getPosition() - ImVec2(0, ball_radius + ImGui::GetWindowHeight()));
+    ImGui::End();
+
+    ImGui::ShowDemoWindow();
+    ImPlot::ShowDemoWindow();
     ////  RENDER OBJECTS  ////
     window.clear();
 
     for (int i = 0; i < NUM_BALLS; i++) {
       window.draw(balls[i].ball);
     }
+    window.draw(text);
     /// put this last for everything to be on top of window.
     ImGui::SFML::Render(window);
     window.display();
