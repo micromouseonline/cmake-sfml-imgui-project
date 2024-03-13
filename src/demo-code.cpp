@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <string>
 
+#include "imgui-knobs.h"
 #include "imgui_toggle.h"
 
 /**
@@ -117,4 +118,24 @@ void imgui_toggle_demo() {
 
   ImGui::PopStyleColor(1);
   ImGui::End();
+}
+
+float imgui_knob_demo() {
+  static float value = 30.0;
+  if (not ImGui::Begin("Imgui-Knobs Demo")) {
+    return value;
+  }
+  /// save some colour shortcuts
+  const ImVec4 green(0.16f, 0.66f, 0.45f, 1.0f);
+  const ImVec4 red(0.96f, 0.0f, 0.0f, 1.0f);
+  const ImVec4 dark_red(0.96f, 0.0f, 0.0f, 0.25f);
+  const ImVec4 light_cyan = (ImVec4)ImColor::HSV(0.5, 0.3f, 1.0f);
+
+  ImGui::PushStyleColor(ImGuiCol_Text, light_cyan);
+  if (ImGuiKnobs::Knob("Ball Velocity", &value, 0.0f, 60.0f, 1.0f, "%.1f", ImGuiKnobVariant_Stepped, 168)) {
+    // value was changed
+  }
+  ImGui::PopStyleColor(1);
+  ImGui::End();
+  return value;
 }
