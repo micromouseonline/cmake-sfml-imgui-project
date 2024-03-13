@@ -1,23 +1,24 @@
-#include <functional>
 #include <imgui-SFML.h>
 #include <math.h>
+#include <functional>
 #include <random>
 #include <string>
 
-#define IMGUI_DEFINE_MATH_OPERATORS // Access to math operators
+#define IMGUI_DEFINE_MATH_OPERATORS  // Access to math operators
+#include <imgui.h>
+#include <SFML/Graphics.hpp>
+#include <cmath>
+#include <filesystem>
 #include "demo-code.h"
 #include "imgui-knobs.h"
 #include "implot.h"
-#include <SFML/Graphics.hpp>
-#include <cmath>
-#include <imgui.h>
 
 //-----------------------------------------------------------------------------
 /// Handy debug macro
-#define IM_TRACE_LOCATION()                                                    \
-  if (ImGui::Begin("Function Trace")) {                                        \
-    ImGui::Text("%s(), %s::%d", __FUNCTION__, __FILE__, __LINE__);             \
-  }                                                                            \
+#define IM_TRACE_LOCATION()                                        \
+  if (ImGui::Begin("Function Trace")) {                            \
+    ImGui::Text("%s(), %s::%d", __FUNCTION__, __FILE__, __LINE__); \
+  }                                                                \
   ImGui::End();
 //-----------------------------------------------------------------------------
 
@@ -41,38 +42,36 @@ void init_balls() {
 
   auto random = std::bind(distribution, std::ref(engine));
   sf::Vector2f direction(random(), random());
-  float velocity =
-      std::sqrt(direction.x * direction.x + direction.y * direction.y);
+  float velocity = std::sqrt(direction.x * direction.x + direction.y * direction.y);
   for (int i = 0; i < NUM_BALLS; i++) {
     balls[i].direction = sf::Vector2f(random(), random());
     balls[i].ball.setRadius(ball_radius);
     balls[i].ball.setFillColor(sf::Color::Yellow);
     balls[i].ball.setOrigin(ball_radius, ball_radius);
     balls[i].ball.setPosition(window_width / 2, window_height / 2);
-    balls[i].ball.setPosition(
-        ball_radius + rand() % (window_width - 2 * ball_radius),
-        ball_radius + rand() % (window_height - 2 * ball_radius));
+    balls[i].ball.setPosition(ball_radius + rand() % (window_width - 2 * ball_radius), ball_radius + rand() % (window_height - 2 * ball_radius));
     balls[i].ball.move(random(), random());
   }
 }
+
+
 void update_balls(float velocity, float delta_time) {
   for (int i = 0; i < NUM_BALLS; i++) {
     const auto pos = balls[i].ball.getPosition();
     float delta = delta_time * velocity;
 
-    sf::Vector2f new_pos(pos.x + balls[i].direction.x * delta,
-                         pos.y + balls[i].direction.y * delta);
+    sf::Vector2f new_pos(pos.x + balls[i].direction.x * delta, pos.y + balls[i].direction.y * delta);
 
-    if (new_pos.x - ball_radius < 0) { // left window edge
+    if (new_pos.x - ball_radius < 0) {  // left window edge
       balls[i].direction.x *= -1;
       new_pos.x = 0 + ball_radius;
-    } else if (new_pos.x + ball_radius >= window_width) { // right window edge
+    } else if (new_pos.x + ball_radius >= window_width) {  // right window edge
       balls[i].direction.x *= -1;
       new_pos.x = window_width - ball_radius;
-    } else if (new_pos.y - ball_radius < 0) { // top of window
+    } else if (new_pos.y - ball_radius < 0) {  // top of window
       balls[i].direction.y *= -1;
       new_pos.y = 0 + ball_radius;
-    } else if (new_pos.y + ball_radius >= window_height) { // bottom of window
+    } else if (new_pos.y + ball_radius >= window_height) {  // bottom of window
       balls[i].direction.y *= -1;
       new_pos.y = window_height - ball_radius;
     }
