@@ -159,7 +159,6 @@ int main() {
     ImPlot::ShowDemoWindow();
 
     /************************************************************************/
-    ////  DRAW OBJECTS  //////////////////////////////////////////////////////
     //// A text label that follows one of the balls
     std::string name_string = "JUPITER";
     /// Create a window that only displays a string
@@ -175,10 +174,10 @@ int main() {
 
     ////  RENDER OBJECTS  ////////////////////////////////////////////////////
     window.clear();
-
     for (int i = 0; i < NUM_BALLS; i++) {
       window.draw(balls[i].ball);
     }
+
     window.draw(text);
     /// put this last for everything to be on top of window.
     ImGui::SFML::Render(window);
