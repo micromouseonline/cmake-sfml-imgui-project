@@ -80,41 +80,55 @@ void update_balls(float velocity, float delta_time) {
 }
 
 int main() {
+  /// not used - just an aide-memoir
   std::filesystem::path currentPath = std::filesystem::current_path();
   std::string currentPathString = currentPath.string();
 
+  /// the clock is essential for updating displays - possibly only ImGui though
+  sf::Clock clock;
+
   auto window = sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
-  int x = ImGui::SFML::Init(window);
+  int x = ImGui::SFML::Init(window);  // compiler warning if we discard the result
   ImGuiIO &io = ImGui::GetIO();
+  // TODO: find out more about these options
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport /
                                                          // Platform Windows
 
-  auto fancyFont = io.Fonts->AddFontFromFileTTF("CONSOLA.TTF", 20);
+  //// We will use this font in some ImGui stuff
+  auto dot_matrix_font = io.Fonts->AddFontFromFileTTF("assets/dotmatrix.ttf", 16);
   if (!ImGui::SFML::UpdateFontTexture()) {
-    std::cerr << "No luck\n";
+    std::cerr << "ERROR: Cannot load font file\n";
   }
 
-  // ImGui::CreateContext();
-  ImPlot::CreateContext();  // don't forget this TODO:: Find out why this is needed
+  //// And this font for SFML
+  //// The font file path is relative to the binary directory
+  //// Or you must be able to determine an absolute path at runtime
+  //// This SFML font setting is entirely independant of ImGui
+  sf::Font font;
+  font.loadFromFile("assets/consolas.ttf");
 
+  sf::Text text;
+  text.setFont(font);
+  text.setString("SFML font - consolas");
+  text.setCharacterSize(20);
+  //// or do it all in one:
+  // sf::Text text("SFML font - consolas", font, 24);
+  text.setFillColor(sf::Color(192, 192, 255, 255));
+  text.setPosition(10, 10);  // Set position on the window
+
+  ImGui::CreateContext();   // not sure this is needed
+  ImPlot::CreateContext();  // but this must come afterwards TODO:: Find out why this is needed
+
+  /// we can set the frame rate in a number of ways
   window.setVerticalSyncEnabled(true);
   // window.setFramerateLimit(60);
 
-  //// The font file must be in the same directory as the binary - or you must know the relative path
-  //// This font setting is entirely independant of ImGui
-  sf::Font font;
-  font.loadFromFile("CONSOLA.TTF");
-  sf::Text text(currentPathString, font, 14);
-  text.setFillColor(sf::Color::Cyan);
-  text.setPosition(10, 10);  // Set position on the window
-
   init_balls();
-  sf::Clock clock;
   while (window.isOpen()) {
-    ////  USER IO  ////
+    ////  USER IO  ////////////////////////////////////////////////////////////
     for (auto event = sf::Event{}; window.pollEvent(event);) {
       ImGui::SFML::ProcessEvent(window, event);
 
@@ -127,12 +141,13 @@ int main() {
       }
     }
 
-    ////  UPDATE OBJECTS  ////
+    ////  UPDATE OBJECTS  /////////////////////////////////////////////////////
     auto delta_time = clock.restart();
 
     /// Call this BEFORE any ImGui functions in the frame
     ImGui::SFML::Update(window, delta_time);
 
+    /************************************************************************/
     /// the ImGui windows do not need to be invoked inside the render section
     /// They actually get drawn by ImGui::SFML::Render()
     /// All the operations just add to a draw list
@@ -140,19 +155,25 @@ int main() {
     imgui_toggle_demo();
 
     update_balls(velocity, delta_time.asSeconds());
+    ImGui::ShowDemoWindow();
+    ImPlot::ShowDemoWindow();
 
+    /************************************************************************/
+    ////  DRAW OBJECTS  //////////////////////////////////////////////////////
+    //// A text label that follows one of the balls
+    std::string name_string = "JUPITER";
     /// Create a window that only displays a string
-    ImGui::PushFont(fancyFont);
-    ImGui::Begin("currentPathString:", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text(" %s", currentPathString.c_str());
+    ImGui::PushFont(dot_matrix_font);
+    ImGui::Begin("name", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text(" %s", name_string.c_str());
     /// tie it to one of the balls
     ImGui::SetWindowPos(balls[0].ball.getPosition() - ImVec2(0, ball_radius + ImGui::GetWindowHeight()));
     ImGui::End();
     ImGui::PopFont();
 
-    ImGui::ShowDemoWindow();
-    ImPlot::ShowDemoWindow();
-    ////  RENDER OBJECTS  ////
+    /************************************************************************/
+
+    ////  RENDER OBJECTS  ////////////////////////////////////////////////////
     window.clear();
 
     for (int i = 0; i < NUM_BALLS; i++) {
