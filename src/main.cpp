@@ -89,7 +89,7 @@ int main() {
 
   auto window = sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
   int x = ImGui::SFML::Init(window);  // compiler warning if we discard the result
-  ImGuiIO &io = ImGui::GetIO();
+  ImGuiIO& io = ImGui::GetIO();
   // TODO: find out more about these options
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
@@ -169,6 +169,25 @@ int main() {
     ImGui::SetWindowPos(balls[0].ball.getPosition() - ImVec2(0, ball_radius + ImGui::GetWindowHeight()));
     ImGui::End();
     ImGui::PopFont();
+
+    /*********************/
+    //// Let's plot some data - because we can
+    ImGui::Begin("data plot", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+    static int alpha_index = 1;
+    static float alpha_list[] = {0.01f, 0.025f, 0.05f, 0.1f, 0.2f};
+    const char* alpha_items[] = {"0.01f", "0.025f", "0.05f", "0.1f", "0.2f"};
+
+    static float adc1arr[100];
+    float alpha = alpha_list[alpha_index];
+    for (int i = 0; i < 100; i++) {
+      float d = float(rand() % 200) - 100.0f;
+      adc1arr[i] = alpha * d + (1 - alpha) * adc1arr[i];
+    }
+    ImGui::PlotLines("##Noise", adc1arr, IM_ARRAYSIZE(adc1arr), 0, "EXPONENTIALLY FILTERED NOISE", -100, 100, ImVec2(00, 100), 4);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(80);
+    ImGui::Combo("Alpha", &alpha_index, alpha_items, IM_ARRAYSIZE(alpha_items));
+    ImGui::End();
 
     /************************************************************************/
 
