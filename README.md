@@ -8,6 +8,17 @@ The template starts out very basic, but might receive additional features over t
 - Basic CMake script to build your project and link SFML on any operating system
 - Basic [GitHub Actions](https://github.com/features/actions) script for all major platforms
 
+## Dependencies
+
+On my Linux Mint Cinnamon machine I needed the following but I do not know exactly why
+
+```bash
+ sudo apt install libflac-dev
+ sudo apt install libogg-dev
+ sudo apt install libvorbis-dev
+ sudo apt install libopenal-dev
+
+```
 ## How to Use
 
 1. Follow the above instructions about how to use GitHub's project template feature to create your own project.
