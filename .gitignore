@@ -6,3 +6,5 @@ out
 .vs
 .vscode
 imgui.ini
+bin
+build
