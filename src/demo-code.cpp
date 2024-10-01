@@ -119,7 +119,7 @@ void imgui_toggle_demo() {
 }
 
 float imgui_knob_demo() {
-  static float value = 30.0;
+  static float value = 3.0;
   ImGui::Begin("Imgui-Knobs Demo");
   /// save some colour shortcuts
   const ImVec4 green(0.16f, 0.66f, 0.45f, 1.0f);

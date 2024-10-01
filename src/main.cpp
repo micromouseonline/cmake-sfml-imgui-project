@@ -44,38 +44,38 @@ void init_balls() {
   auto random = std::bind(distribution, std::ref(engine));
   sf::Vector2f direction(random(), random());
   float velocity = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-  for (int i = 0; i < NUM_BALLS; i++) {
-    balls[i].direction = sf::Vector2f(random(), random());
-    balls[i].ball.setRadius(ball_radius);
-    balls[i].ball.setFillColor(sf::Color::Yellow);
-    balls[i].ball.setOrigin(ball_radius, ball_radius);
-    balls[i].ball.setPosition(window_width / 2, window_height / 2);
-    balls[i].ball.setPosition(ball_radius + rand() % (window_width - 2 * ball_radius), ball_radius + rand() % (window_height - 2 * ball_radius));
-    balls[i].ball.move(random(), random());
+  for (auto& ball : balls) {
+    ball.direction = sf::Vector2f(random(), random());
+    ball.ball.setRadius(ball_radius);
+    ball.ball.setFillColor(sf::Color::Yellow);
+    ball.ball.setOrigin(ball_radius, ball_radius);
+    ball.ball.setPosition(window_width / 2, window_height / 2);
+    ball.ball.setPosition(ball_radius + rand() % (window_width - 2 * ball_radius), ball_radius + rand() % (window_height - 2 * ball_radius));
+    ball.ball.move(random(), random());
   }
 }
 
 void update_balls(float velocity, float delta_time) {
-  for (int i = 0; i < NUM_BALLS; i++) {
-    const auto pos = balls[i].ball.getPosition();
+  for (auto& ball : balls) {
+    const auto pos = ball.ball.getPosition();
     float delta = delta_time * velocity;
 
-    sf::Vector2f new_pos(pos.x + balls[i].direction.x * delta, pos.y + balls[i].direction.y * delta);
+    sf::Vector2f new_pos(pos.x + ball.direction.x * delta, pos.y + ball.direction.y * delta);
 
     if (new_pos.x - ball_radius < 0) {  // left window edge
-      balls[i].direction.x *= -1;
+      ball.direction.x *= -1;
       new_pos.x = 0 + ball_radius;
     } else if (new_pos.x + ball_radius >= window_width) {  // right window edge
-      balls[i].direction.x *= -1;
+      ball.direction.x *= -1;
       new_pos.x = window_width - ball_radius;
     } else if (new_pos.y - ball_radius < 0) {  // top of window
-      balls[i].direction.y *= -1;
+      ball.direction.y *= -1;
       new_pos.y = 0 + ball_radius;
     } else if (new_pos.y + ball_radius >= window_height) {  // bottom of window
-      balls[i].direction.y *= -1;
+      ball.direction.y *= -1;
       new_pos.y = window_height - ball_radius;
     }
-    balls[i].ball.setPosition(new_pos);
+    ball.ball.setPosition(new_pos);
   }
 }
 
@@ -86,9 +86,16 @@ int main() {
 
   /// the clock is essential for updating displays - possibly only ImGui though
   sf::Clock clock;
+  sf::ContextSettings settings;
+  settings.antialiasingLevel = 8;  // the number of multisamplings to use. 4 is probably fine
 
-  auto window = sf::RenderWindow{{window_width, window_height}, "CMake SFML Project"};
-  int x = ImGui::SFML::Init(window);  // compiler warning if we discard the result
+  auto window = sf::RenderWindow{{window_width, window_height}, "CMake SFML Project", sf::Style::Default, settings};
+  if (!ImGui::SFML::Init(window)) {
+    std::cerr << "Failed to initialize ImGui with SFML. Please check your setup." << std::endl;
+    window.close();
+    return EXIT_FAILURE;
+  }
+
   ImGuiIO& io = ImGui::GetIO();
   // TODO: find out more about these options
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
@@ -98,7 +105,14 @@ int main() {
                                                          // Platform Windows
 
   //// We will use this font in some ImGui stuff
+  io.Fonts->Clear();
+  io.Fonts->AddFontDefault();
   auto dot_matrix_font = io.Fonts->AddFontFromFileTTF("assets/dotmatrix.ttf", 16);
+  auto font1 = io.Fonts->AddFontFromFileTTF("assets/Roboto-Regular.ttf", 14.0f);
+  auto font2 = io.Fonts->AddFontFromFileTTF("assets/Roboto-Medium.ttf", 14.0f);
+  auto font3 = io.Fonts->AddFontFromFileTTF("assets/Roboto-Bold.ttf", 14.0f);
+  auto font4 = io.Fonts->AddFontFromFileTTF("assets/ubuntu-r.ttf", 14.0f);
+  io.Fonts->Build();
   if (!ImGui::SFML::UpdateFontTexture()) {
     std::cerr << "ERROR: Cannot load font file\n";
   }
@@ -106,7 +120,7 @@ int main() {
   //// And this font for SFML
   //// The font file path is relative to the binary directory
   //// Or you must be able to determine an absolute path at runtime
-  //// This SFML font setting is entirely independant of ImGui
+  //// This SFML font setting is entirely independent of ImGui
   sf::Font font;
   font.loadFromFile("assets/consolas.ttf");
 
@@ -115,19 +129,23 @@ int main() {
   text.setString("SFML font - consolas");
   text.setCharacterSize(20);
   //// or do it all in one:
-  // sf::Text text("SFML font - consolas", font, 24);
+  //   sf::Text text("SFML font - consolas", font, 24);
   text.setFillColor(sf::Color(192, 192, 255, 255));
   text.setPosition(10, 10);  // Set position on the window
 
-  ImGui::CreateContext();   // not sure this is needed
-  ImPlot::CreateContext();  // but this must come afterwards TODO:: Find out why this is needed
+  ImGui::CreateContext();   // This function initializes the ImGui context, which is essential for managing the state and resources used by ImGui.
+  ImPlot::CreateContext();  // initializes the ImPlot context, which is necessary for managing the state and resources specific to ImPlot. It must come after
+                            // ImGui::CreateContext() because ImPlot relies on the ImGui context being already set up.
 
   /// we can set the frame rate in a number of ways
   window.setVerticalSyncEnabled(true);
   // window.setFramerateLimit(60);
 
   init_balls();
+  sf::Clock frame_time;
+  sf::Time elapsed = frame_time.restart();
   while (window.isOpen()) {
+    frame_time.restart();
     ////  USER IO  ////////////////////////////////////////////////////////////
     for (auto event = sf::Event{}; window.pollEvent(event);) {
       ImGui::SFML::ProcessEvent(window, event);
@@ -183,23 +201,48 @@ int main() {
       float d = float(rand() % 200) - 100.0f;
       adc1arr[i] = alpha * d + (1 - alpha) * adc1arr[i];
     }
-    ImGui::PlotLines("##Noise", adc1arr, IM_ARRAYSIZE(adc1arr), 0, "EXPONENTIALLY FILTERED NOISE", -100, 100, ImVec2(00, 100), 4);
+    ImGui::PlotLines("##Noise", adc1arr, IM_ARRAYSIZE(adc1arr), 0, "EXPONENTIALLY FILTERED NOISE ", -100, 100, ImVec2(00, 100), 4);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(80);
     ImGui::Combo("Alpha", &alpha_index, alpha_items, IM_ARRAYSIZE(alpha_items));
     ImGui::End();
 
     /************************************************************************/
+    /// and plot the frame times
+    static std::vector<float> perf(100, 0);
+    perf.erase(perf.begin());
+    perf.push_back(1e6 / elapsed.asMicroseconds());
+
+    ImVec2 plot_size(400, 200);
+    ImGui::SetNextWindowSize(plot_size);
+    ImGui::Begin("Frame Rate", nullptr, ImGuiWindowFlags_NoResize);
+    int padx = ImGui::GetStyle().WindowPadding.x * 2;
+    int pady = ImGui::GetStyle().WindowPadding.y * 2 + ImGui::GetFrameHeight();
+    ImVec2 plot_actual_size = ImVec2(plot_size.x - padx, plot_size.y - pady);
+    if (ImPlot::BeginPlot("FPS", plot_actual_size, ImPlotFlags_NoTitle | ImPlotFlags_NoLegend)) {
+      ImPlot::SetupAxes("nullptr", "FPS", ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickLabels, 0);  // ImPlotAxisFlags_NoLabel);
+      ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 2000);
+      ImPlot::PlotLine("FPS", perf.data(), perf.size());
+      //  ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+      //  ImPlot::PlotLine("g(x)", xs2, ys2, 20,ImPlotLineFlags_Segments);
+      ImPlot::EndPlot();
+    }
+    ImGui::End();
 
     ////  RENDER OBJECTS  ////////////////////////////////////////////////////
     window.clear();
-    for (int i = 0; i < NUM_BALLS; i++) {
-      window.draw(balls[i].ball);
+    for (auto& ball : balls) {
+      window.draw(ball.ball);
     }
-
+    int us = elapsed.asMicroseconds();
+    int fps = 1e6 / us;
+    text.setString(std::to_string(us) + "  =>  " + std::to_string(fps) + "fps");
     window.draw(text);
     /// put this last for everything to be on top of window.
     ImGui::SFML::Render(window);
+    float a = 0.95;
+    auto t = frame_time.getElapsedTime();
+    elapsed = a * elapsed + (1 - a) * t;
     window.display();
   }
 
